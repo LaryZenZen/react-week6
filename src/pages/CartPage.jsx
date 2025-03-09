@@ -1,21 +1,16 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import ReactLoading from 'react-loading'
 import axios from 'axios'
-import { Modal } from 'bootstrap'
 import 'bootstrap/dist/css/bootstrap.css'
-import './App.css'
 
 const BASE_URL = import.meta.env.VITE_BASE_URL
 const API_PATH = import.meta.env.VITE_API_PATH
 
-function App() {
-  const [products, setProducts] = useState([])
-  const [tempProduct, setTempProduct] = useState([])
+export default function CartPage() {
   const [cart, setCart] = useState({})
 
   const [isScreenLoading, setIsScreenLoading] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
 
   // 取得購物車
   const getCart = async () => {
@@ -28,60 +23,8 @@ function App() {
   }
 
   useEffect(() => {
-    const getProducts = async () => {
-      setIsScreenLoading(true)
-      try {
-        const res = await axios.get(`${BASE_URL}/v2/api/${API_PATH}/products`)
-        setProducts(res.data.products)
-      } catch (error) {
-        alert('取得產品失敗')
-      } finally {
-        setIsScreenLoading(false)
-      }
-    }
-    getProducts()
     getCart()
   }, [])
-
-  const productModalRef = useRef(null)
-  useEffect(() => {
-    new Modal(productModalRef.current, { backdrop: false })
-  }, [])
-
-  const openModal = () => {
-    const modalInstance = Modal.getInstance(productModalRef.current)
-    modalInstance.show()
-  }
-
-  const closeModal = () => {
-    const modalInstance = Modal.getInstance(productModalRef.current)
-    modalInstance.hide()
-  }
-
-  const handleSeeMore = (product) => {
-    setTempProduct(product)
-    openModal()
-  }
-
-  const [qtySelect, setQtySelect] = useState(1)
-
-  // 購物車
-  const addCartItem = async (product_id, qty) => {
-    setIsLoading(true)
-    try {
-      await axios.post(`${BASE_URL}/v2/api/${API_PATH}/cart`, {
-        data: {
-          product_id,
-          qty: Number(qty),
-        },
-      })
-      getCart()
-    } catch (error) {
-      alert('加入購物車失敗')
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   // 清空購物車
   const removeCart = async () => {
@@ -160,128 +103,7 @@ function App() {
 
   return (
     <div className="container">
-      <div className="mt-4">
-        <table className="table align-middle">
-          <thead>
-            <tr>
-              <th>圖片</th>
-              <th>商品名稱</th>
-              <th>價格</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map((product) => (
-              <tr key={product.id}>
-                <td style={{ width: '200px' }}>
-                  <img
-                    className="img-fluid"
-                    src={product.imageUrl}
-                    alt={product.title}
-                  />
-                </td>
-                <td>{product.title}</td>
-                <td>
-                  <del className="h6">原價 {product.origin_price} 元</del>
-                  <div className="h5">特價 {product.origin_price}元</div>
-                </td>
-                <td>
-                  <div className="btn-group btn-group-sm">
-                    <button
-                      onClick={() => handleSeeMore(product)}
-                      type="button"
-                      className="btn btn-outline-secondary"
-                    >
-                      查看更多
-                    </button>
-                    <button
-                      onClick={() => addCartItem(product.id, 1)}
-                      type="button"
-                      disabled={isLoading}
-                      className="btn btn-outline-danger d-flex align-items-center gap-2"
-                    >
-                      加到購物車
-                      {isLoading && (
-                        <ReactLoading
-                          type={'spin'}
-                          color={'#000'}
-                          height={'1.5rem'}
-                          width={'1.5rem'}
-                        />
-                      )}
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* <div
-          ref={productModalRef}
-          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-          className="modal fade"
-          id="productModal"
-          tabIndex="-1"
-        >
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h2 className="modal-title fs-5">
-                  產品名稱：{tempProduct.title}
-                </h2>
-                <button
-                  onClick={closeModal}
-                  type="button"
-                  className="btn-close"
-                  data-bs-dismiss="modal"
-                  aria-label="Close"
-                ></button>
-              </div>
-              <div className="modal-body">
-                <img
-                  src={tempProduct.imageUrl}
-                  alt={tempProduct.title}
-                  className="img-fluid"
-                />
-                <p>內容：{tempProduct.content}</p>
-                <p>描述：{tempProduct.description}</p>
-                <p>
-                  價錢：{tempProduct.price}{" "}
-                  <del>{tempProduct.origin_price}</del> 元
-                </p>
-                <div className="input-group align-items-center">
-                  <label htmlFor="qtySelect">數量：</label>
-                  <select
-                    value={qtySelect}
-                    onChange={(e) => setQtySelect(e.target.value)}
-                    id="qtySelect"
-                    className="form-select"
-                  >
-                    {Array.from({ length: 10 }).map((_, index) => (
-                      <option key={index} value={index + 1}>
-                        {index + 1}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button disabled={isLoading} onClick={()=>addCartItem(tempProduct.id,qtySelect)} type="button" className="btn btn-primary d-flex align-items-center gap-2">
-                  <div>加入購物車</div>
-                  {isLoading && (
-                  <ReactLoading
-                    type={"spin"}
-                    color={"#000"}
-                    height={"1.5rem"}
-                    width={"1.5rem"}
-                  />
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div> */}
+      <div>
         {cart.carts?.length > 0 && (
           <div>
             <div className="text-end py-3">
@@ -376,7 +198,7 @@ function App() {
           </div>
         )}
       </div>
-      <div className="my-5 row justify-content-center">
+      <div className=" my-5 row justify-content-center">
         <form onSubmit={onSubmit} className="col-md-6">
           <div className="mb-3">
             <label htmlFor="email" className="form-label">
@@ -496,5 +318,3 @@ function App() {
     </div>
   )
 }
-
-export default App
